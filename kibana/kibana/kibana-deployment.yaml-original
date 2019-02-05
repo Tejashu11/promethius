@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kibana-pv-claim
+  labels:
+    service: kibana 
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: kibana-deployment
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+      - name: kibana 
+        image: docker.elastic.co/kibana/kibana:6.4.1 
+        ports:
+        - containerPort: 5601
+        env:
+        - name: ELASTICSEARCH_URL
+          value: http://10.128.0.4:32136
+        volumeMounts:
+        - name: kibana-persistent-storage
+          mountPath: /data
+      volumes:
+      - name: kibana-persistent-storage
+        persistentVolumeClaim:
+          claimName: kibana-pv-claim
